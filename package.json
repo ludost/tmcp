@@ -1,5 +1,5 @@
 {
-  "name": "TMCP",
+  "name": "tmcp",
   "version": "1.0.0",
   "description": "POSIX Terminal-based Modular Control Pipeline",
   "homepage": "https://github.com/ludost/tmcp#readme",
