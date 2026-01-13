@@ -1,6 +1,6 @@
 {
   "name": "tmcp",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "POSIX Terminal-based Modular Control Pipeline",
   "homepage": "https://github.com/ludost/tmcp#readme",
   "bugs": {
