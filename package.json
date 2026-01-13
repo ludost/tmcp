@@ -23,5 +23,39 @@
     "modbus-serial": "^8.0.23",
     "serialport": "^13.0.0",
     "why-is-node-running": "^3.2.2"
+  },
+  "bin": {
+    "tmcp-adapter-modbus": "js/tmcp-adapter-modbus.js",
+    "tmcp-adapter-zaptec": "js/tmcp-adapter-zaptec.js",
+
+    "tmcp-annotate-derivative": "js/tmcp-annotate-derivative.js",
+    "tmcp-annotate-inject": "js/tmcp-annotate-inject.js",
+    "tmcp-annotate-stalled": "js/tmcp-annotate-stalled.js",
+    "tmcp-annotate-state-machine": "js/tmcp-annotate-state-machine.js",
+
+    "tmcp-control-dedup": "js/tmcp-control-dedup.js",
+    "tmcp-control-delay": "js/tmcp-control-delay.js",
+    "tmcp-control-gate": "js/tmcp-control-gate.js",
+    "tmcp-control-merge-streams": "js/tmcp-control-merge-streams.js",
+    "tmcp-control-minrate": "js/tmcp-control-minrate.js",
+    "tmcp-control-split-streams": "js/tmcp-control-split-streams.js",
+
+    "tmcp-sink-channel": "js/tmcp-sink-channel.js",
+    "tmcp-sink-csv": "js/tmcp-sink-csv.js",
+    "tmcp-sink-file": "js/tmcp-sink-file.js",
+    "tmcp-sink-influxdb": "js/tmcp-sink-influxdb.js",
+    "tmcp-sink-viewer": "js/tmcp-sink-viewer.js",
+
+    "tmcp-source-arduino": "js/tmcp-source-arduino.js",
+    "tmcp-source-channel": "js/tmcp-source-channel.js",
+    "tmcp-source-csv": "js/tmcp-source-csv.js",
+    "tmcp-source-dsmr": "js/tmcp-source-dsmr.js",
+    "tmcp-source-file": "js/tmcp-source-file.js",
+
+    "tmcp-transformer-derivative": "js/tmcp-transformer-derivative.js",
+    "tmcp-transformer-highpass-gain": "js/tmcp-transformer-highpass-gain.js",
+    "tmcp-transformer-kalman": "js/tmcp-transformer-kalman.js",
+    "tmcp-transformer-pid": "js/tmcp-transformer-pid.js",
+    "tmcp-transformer-reduce": "js/tmcp-transformer-reduce.js"
   }
 }
