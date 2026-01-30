@@ -5,6 +5,10 @@
 
 This repository contains **The Pipeline**, a POSIX-terminal-based modular NDJSON processing architecture for real-time control tasks.
 
+## Attribution
+
+The Pipeline is based on work and insights developed at Almende BV, Rotterdam, The Netherlands. (www.almende.com)
+
 ---
 
 ## Overview

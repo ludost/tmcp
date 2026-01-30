@@ -2247,98 +2247,96 @@ Fields:
 
 **Interpolation and matching**
 
-For bounded mode, the module uses two functions:
+For bounded mode, the module uses two functions.
 
-1. `findClosest(buf, ts)`:
+`findClosest(buf, ts)`
 
-   * Searches `buf` for the record whose `meta.timestamp` is closest to `ts`.
-   * If the best difference exceeds `matchToleranceMs`:
+This function searches `buf` for the record whose `meta.timestamp` is closest to `ts`.
 
-     * Logs a warning with details and returns `null`.
-   * Otherwise, returns the closest record.
+If the best difference exceeds `matchToleranceMs`, a warning is logged with details and the function returns `null`.
+Otherwise, the closest record is returned.
 
-2. `interpolateBounded(buf, ts)`:
+---
 
-   * First tries `findClosest()`.
-   * If a nearest neighbor is found within tolerance, it is used as-is.
-   * Otherwise:
+`interpolateBounded(buf, ts)`
 
-     * Finds the last record with timestamp `≤ ts` (`before`) and the first with `> ts` (`after`).
-     * If both exist and `after.meta.timestamp > before.meta.timestamp`:
+This function first tries `findClosest()`.
 
-       * Computes a linear interpolation factor `ratio` between `[t1, t2]`.
-       * Builds a new object:
+If a nearest neighbor is found within tolerance, it is used as-is.
+Otherwise, the function proceeds as follows.
 
-         * `structuredClone(before)`, with `meta.timestamp = ts`.
-         * For each numeric field in `before.data` that is also numeric in `after.data`:
+First, it finds:
 
-           * Linearly interpolates:
+* the last record with timestamp `≤ ts` (called `before`), and
+* the first record with timestamp `> ts` (called `after`).
 
-             * `out.data[k] = v1 + (v2 - v1) * ratio`.
-         * Non-numeric fields are taken from `before`.
-     * If only `before` or only `after` exists:
+If both records exist and `after.meta.timestamp > before.meta.timestamp`, a linear interpolation is performed:
 
-       * Returns that record directly.
-     * If neither exists:
+* A linear interpolation factor `ratio` is computed between `[t1, t2]`.
+* A new object is constructed as `structuredClone(before)` with `meta.timestamp = ts`.
 
-       * Returns `null`.
+For each numeric field in `before.data` that is also numeric in `after.data`, the value is interpolated as:
 
-For unbounded mode:
+```
+out.data[k] = v1 + (v2 - v1) * ratio
+```
 
-* `interpolateSide(i, ts)` simply returns `sideLastUnbounded[i]` (or `null` if none).
-* It *never* falls back to bounded interpolation.
+Non-numeric fields are taken directly from `before`.
+
+If only `before` or only `after` exists, that record is returned directly.
+If neither exists, the function returns `null`.
+
+---
+
+**Unbounded mode**
+
+For unbounded mode, the behavior is simpler.
+
+The function `interpolateSide(i, ts)` returns `sideLastUnbounded[i]`, or `null` if no value exists.
+It never falls back to bounded interpolation.
 
 **Emission**
 
-There is always **one output per main-stream input**:
+There is always **one output per main-stream input**.
 
-* `safeRead()` on stdin receives main messages:
+The function `safeRead()` on stdin receives main messages and immediately pushes them into the main buffer, followed by a call to `tryEmit()`:
 
-  ```js
-  safeRead(obj => {
-    pushMain(obj);
-    tryEmit();
-  }, undefined, { channelId: "stdin", exitOnClose: true });
-  ```
+```js
+safeRead(obj => {
+  pushMain(obj);
+  tryEmit();
+}, undefined, { channelId: "stdin", exitOnClose: true });
+```
 
-* `tryEmit()` operates on the latest main message:
+The function `tryEmit()` always operates on the latest main message.
+Let `mainObj` be `mainBuffer.at(-1)`.
 
-  1. Let `mainObj` be `mainBuffer.at(-1)`.
+If `mainObj.meta.timestamp` is not a valid number, a passthrough object is emitted.
+In this case, a new object is constructed by shallow-copying `meta` and `data` from `mainObj`, the `"mrg"` tag is appended to `meta`, and the object is written to stdout:
 
-  2. If `mainObj.meta.timestamp` is not a valid number:
+```js
+const out = {
+  meta: { ...(mainObj.meta || {}) },
+  data: { ...(mainObj.data || {}) }
+};
+appendTag(out.meta, "mrg");
+safeWrite(out, undefined, { channelId: "stdout", exitOnClose: true });
+```
 
-     * Emit a passthrough:
+If `mainObj.meta.timestamp` *is* a valid number, a merged object is constructed instead.
+The merged object copies all existing metadata, overwrites `timestamp` with `ts`, and copies all existing data fields:
 
-       ```js
-       const out = {
-         meta: { ...(mainObj.meta || {}) },
-         data: { ...(mainObj.data || {}) }
-       };
-       appendTag(out.meta, "mrg");
-       safeWrite(out, undefined, { channelId: "stdout", exitOnClose: true });
-       ```
+```js
+const merged = {
+  meta: { ...(mainObj.meta || {}), timestamp: ts },
+  data: { ...(mainObj.data || {}) }
+};
+```
 
-  3. Otherwise:
+For each side index `i`, the function `interpolateSide(i, ts)` is called.
+If a record `rec` is returned and `rec.data` exists, each `[key, val]` pair in `rec.data` is added to the merged object as `merged.data[key + postfixes[i]] = val`.
 
-     * Construct a merged object:
-
-       ```js
-       const merged = {
-         meta: { ...(mainObj.meta || {}), timestamp: ts },
-         data: { ...(mainObj.data || {}) }
-       };
-       ```
-
-     * For each side index `i`:
-
-       * `rec = interpolateSide(i, ts)`.
-       * If `rec` and `rec.data` exist:
-
-         * For each `[key, val]` in `rec.data`:
-
-           * Add `merged.data[key + postfixes[i]] = val`.
-
-     * Tag `merged.meta` with `"mrg"` and emit via `safeWrite()`.
+After processing all sides, the `"mrg"` tag is added to `merged.meta`, and the merged object is emitted via `safeWrite()`.
 
 **Side-channel input**
 
@@ -2422,9 +2420,9 @@ Each subsection below follows the canonical documentation pattern:
 
 Computes per-field derivatives:
 
-[
+$$
 \frac{d}{dt} (value) = \frac{\Delta value}{\Delta t}
-]
+$$
 
 for every numeric field in the pipeline stream.
 Each field has its own independent state `{ prevVal, prevTime }`.
@@ -2935,9 +2933,9 @@ For each output field:
   * If Δt < window or Δt ≤ 0 → output `0`.
   * Else compute:
 
-    [
+    $$
     \text{derivative} = \frac{v - v_{\text{prev}}}{\Delta t / 1000}
-    ]
+    $$
 
 * Writes outputs into a fresh `outData = { ...inData }`, preserving originals.
 
