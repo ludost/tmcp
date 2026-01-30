@@ -10,7 +10,7 @@
     "type": "git",
     "url": "git+https://github.com/ludost/tmcp.git"
   },
-  "license": "MIT",
+  "license": "Apache-2.0",
   "author": "Ludo Stellingwerff",
   "type": "module",
   "main": "index.js",
